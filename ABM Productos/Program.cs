@@ -1,9 +1,19 @@
-﻿using ABM.Repositories.Implementations;
+﻿using ABM.Data;
+using Microsoft.EntityFrameworkCore;
+using ABM.Repositories.Implementations;
 using ABM.Repositories.Interfaces;
 using ABM.Services.Implementations;
 using ABM.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
+
 
 builder.Services.AddControllers();
 

@@ -1,5 +1,7 @@
-﻿using ABM.Repositories.Interfaces;
+﻿
+using ABM.Data;
 using ABM.Entities;
+using ABM.Repositories.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,58 +9,62 @@ namespace ABM.Repositories.Implementations
 {
     public class ProductRepository : IProductRepository
     {
-        private static List<Product> _products = new()
-    {
-        new Product { Id = 1, Name = "Mouse inalámbrico", Price = 3999.99m }
-    };
+        private readonly AppDbContext _context;
+
+        public ProductRepository(AppDbContext context)
+        {
+            _context = context;
+        }
 
         public List<Product> GetAllProducts()
         {
-            return _products;
+            return _context.Products.ToList();
         }
 
         public Product? GetProductById(int id)
         {
-            return _products.FirstOrDefault(p => p.Id == id);
+            return _context.Products
+                .FirstOrDefault(p => p.Id == id);
         }
 
         public void AddProduct(Product product)
         {
-            if (_products.Count == 0)
-            {
-                product.Id = 1;
-            }
-            else
-            {
-                product.Id = _products.Max(p => p.Id) + 1;
-            }
-
-            _products.Add(product);
+            _context.Products.Add(product);
+            _context.SaveChanges();
         }
 
         public void UpdateProduct(Product product)
         {
-            var existingProduct = GetProductById(product.Id);
+            var existingProduct =
+                _context.Products.Find(product.Id);
+
             if (existingProduct != null)
             {
                 existingProduct.Name = product.Name;
                 existingProduct.Price = product.Price;
+
+                _context.SaveChanges();
             }
         }
 
         public void DeleteProduct(int id)
         {
-            var product = GetProductById(id);
+            var product = _context.Products.Find(id);
+
             if (product != null)
             {
-                _products.Remove(product);
+                _context.Products.Remove(product);
+                _context.SaveChanges();
             }
         }
 
         public List<Product> SearchProductsByName(string name)
         {
-            return _products.Where(p => p.Name.Contains(name, System.StringComparison.OrdinalIgnoreCase)).ToList();
-        }
+            var search = name.ToLower();
 
-    } 
-} 
+            return _context.Products
+                .Where(p => p.Name.ToLower().Contains(search))
+                .ToList();
+        }
+    }
+}
